@@ -19,11 +19,11 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
   //Listen for pulses from SNES, and output pulses to represent button states
-  //pin2 (INT0) listens for the latch pules
-  //pin3 (INT1) listens for the clock pulses
+  //pin2 (INT0) interrupts on the latch pules
+  //pin3 (INT1) interrupts on the clock pulses
   asm(
+    //save R16 so it can be restored at end of function
     "push R16\n"
-    
     //enable interrupt on pin2 (INT0) and pin3 (INT1)
     "SBI 0x1D, 0\n"
     "SBI 0x1D, 1\n"
@@ -34,7 +34,7 @@ void loop() {
     "STS 0x69, R16\n"
 
     //jumped to when SNES sends a latch pulse (INT0 Interrupt is triggered)
-    "INT0_VECT:\n"
+    "EXT_INT0:\n"
       //check if latch is high or low
       "SBIS 0x09, 2\n"
         "JMP LATCH_FALLING_EDGE\n"
@@ -46,7 +46,9 @@ void loop() {
         //LATCH_FALLING_EDGE should sleep at end and wait for next interrupt (should be the first clock pulse)
         "SLEEP\n"
     //jumpted to when SNES sends clock pulse. Should be used to output the next button press
-    "INT1_VECT:\n"
+    "EXT_INT1:\n"
+    //end of asm function
+    "POP R16\n"
     ::
     );
 }
