@@ -54,7 +54,7 @@ void loop(){
       "EXT_INT0:\n"
         "SBI 0x0B, 7\n"/*
         //check if latch is high or low, jump if high
-        "SBIS 0x09, 2\n"
+        "SBIC 0x09, 2\n"
         "JMP LATCH_RISING_EDGE\n"
         //output first button press on falling edge of latch
         //AND output with bitmask
