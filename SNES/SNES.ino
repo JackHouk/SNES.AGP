@@ -40,21 +40,15 @@ void setup() {
 //buttonsA: B|Y|Select|Start|Up|Down|Left|right
 //buttonsB: A|X|L|R|notUsed|notUsed|notUsed|notUsed
 void loop(){
-  buttonsA = 0b10101011;
-  buttonsB = 0b10100000;
   asm("SBI 0x0B, 7");
-  delay(500);
   asm("SBI 0x0B, 4");
   delay(24);
   asm("CBI 0x0B, 4");
-  delay(4000);
   for(int i = 0; i < 16; i++){
   asm ("SBI 0x0B, 5");
   delay(12);
   asm ("CBI 0x0B, 5");
-  delay(500);
   }
-  delay(1000);
   //Do nothing unless interrupted
   //pin2 (INT0) interrupts on the latch pules
   //pin3 (INT1) interrupts on the clock pulses
@@ -62,6 +56,10 @@ void loop(){
 
 //jumped to when SNES sends a latch pulse (INT0 Interrupt is triggered)
     ISR(INT0_vect){
+      //Generate random button presses
+      buttonsA = rand() % 256;
+      buttonsB = rand() %256;
+      buttonsB = buttonsB & 0b11110000;
     asm volatile(
       "EXT_INT0:\n"
         //check if latch is high or low, jump if high
