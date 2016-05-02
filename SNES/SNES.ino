@@ -40,7 +40,7 @@ void setup() {
 //buttonsA: B|Y|Select|Start|Up|Down|Left|right
 //buttonsB: A|X|L|R|notUsed|notUsed|notUsed|notUsed
 void loop(){
-  asm("SBI 0x0B, 7");
+  /*asm("SBI 0x0B, 7");
   asm("SBI 0x0B, 4");
   delay(24);
   asm("CBI 0x0B, 4");
@@ -48,7 +48,7 @@ void loop(){
   asm ("SBI 0x0B, 5");
   delay(12);
   asm ("CBI 0x0B, 5");
-  }
+  }*/
   //Do nothing unless interrupted
   //pin2 (INT0) interrupts on the latch pules
   //pin3 (INT1) interrupts on the clock pulses
@@ -58,14 +58,15 @@ void loop(){
     ISR(INT0_vect){
       //Generate random button presses
       buttonsA = rand() % 256;
-      buttonsB = rand() %256;
-      buttonsB = buttonsB & 0b11110000;
+      buttonsB = rand() % 256;
+      buttonsA = buttonsA | 0b11111111;
+      buttonsB = buttonsB | 0b00111111;
     asm volatile(
       "EXT_INT0:\n"
         //check if latch is high or low, jump if high
         "SBIC 0x09, 2\n"
         "JMP LATCH_RISING_EDGE\n"
-        "CBI 0x0B, 7\n"
+        "SBI 0x0B, 7\n"
         //load bitmask
         "MOV R16, %2\n"
         //output first button press on falling edge of latch
@@ -85,7 +86,7 @@ void loop(){
         "JMP EXIT_LATCH\n"
 
       "FIRST_BUTTON_OUT:\n"
-        "SBI 0x0B, 7\n"
+        "CBI 0x0B, 7\n"
         
       "EXIT_LATCH:\n"
         
@@ -99,7 +100,7 @@ void loop(){
     ISR(INT1_vect){
     asm volatile(
       "EXT_INT1:\n"
-        "CBI 0x0B, 7\n"
+        "SBI 0x0B, 7\n"
         //check if first 8 button presses are finished
         //if they are, move the next 8 instructions to buttonsA (%0) and reset the bitmask
         "CPI %2, 0\n"
@@ -119,7 +120,7 @@ void loop(){
         "JMP BUTTON_READ\n"
 
       "BUTTON_OUT:\n"
-        "SBI 0x0B, 7\n"
+        "CBI 0x0B, 7\n"
 
       "EXIT:\n"
         "LSR %2\n"
