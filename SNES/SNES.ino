@@ -21,8 +21,8 @@ void setup() {
     //Enable interrupts
     "SEI\n"
     //configuration for EICRA
-    //INT0 will interrupt on toggle, INT1 interrupts on rising edge
-    "LDI R16, 0b00001101\n"
+    //INT0 and INT1 will interrupt on toggle
+    "LDI R16, 0b00000101\n"
     "STS 0x69, R16\n"
     //enable interrupt on pin2 (INT0) and pin3 (INT1)
     "SBI 0x1D, 0\n"
@@ -100,6 +100,8 @@ void loop(){
     ISR(INT1_vect){
     asm volatile(
       "EXT_INT1:\n"
+        "SBIC 0x09, 3\n"
+        "JMP CLOCK_RISING_EDGE\n"
         "SBI 0x0B, 7\n"
         //check if first 8 button presses are finished
         //if they are, move the next 8 instructions to buttonsA (%0) and reset the bitmask
@@ -119,6 +121,10 @@ void loop(){
         "LDI %2, 0b1000000\n"
         "JMP BUTTON_READ\n"
 
+      "CLOCK_RISING_EDGE:\n"
+        "SBI 0x0B, 7\n"
+        "JMP EXIT\n"
+      
       "BUTTON_OUT:\n"
         "CBI 0x0B, 7\n"
 
