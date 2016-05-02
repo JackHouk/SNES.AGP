@@ -21,12 +21,11 @@ void setup() {
     //Enable interrupts
     "SEI\n"
     //configuration for EICRA
-    //INT0 and INT1 will interrupt on toggle
-    "LDI R16, 0b00000101\n"
+    //INT0 will interrupt on toggle, INT1 on rising edge
+    "LDI R16, 0b00001101\n"
     "STS 0x69, R16\n"
-    //enable interrupt on pin2 (INT0) and pin3 (INT1)
+    //enable interrupt on pin2 (INT0). Pin3 is enabled later
     "SBI 0x1D, 0\n"
-    "SBI 0x1D, 1\n"
     :
     :
     :"r16", "r17", "cc", "memory"
@@ -89,6 +88,9 @@ void loop(){
         "CBI 0x0B, 7\n"
         
       "EXIT_LATCH:\n"
+      //Enable interrupt on pin 3 (INT1) to receive clock pulses
+        "SBIS 0x1D, 1\n"
+        "SBI 0x1D, 1\n"
         
         :"+r"(buttonsA),"+r"(buttonsB), "+r"(mask)
         :
@@ -100,8 +102,8 @@ void loop(){
     ISR(INT1_vect){
     asm volatile(
       "EXT_INT1:\n"
-        "SBIC 0x09, 3\n"
-        "JMP CLOCK_RISING_EDGE\n"
+        "SBIS 0x09, 3\n"
+        "JMP CLOCK_FALLING_EDGE\n"
         "SBI 0x0B, 7\n"
         //check if first 8 button presses are finished
         //if they are, move the next 8 instructions to buttonsA (%0) and reset the bitmask
@@ -120,16 +122,13 @@ void loop(){
         "MOV %0, %1\n"
         "LDI %2, 0b1000000\n"
         "JMP BUTTON_READ\n"
-
-      "CLOCK_RISING_EDGE:\n"
-        "SBI 0x0B, 7\n"
-        "JMP EXIT\n"
       
       "BUTTON_OUT:\n"
         "CBI 0x0B, 7\n"
 
       "EXIT:\n"
         "LSR %2\n"
+      "CLOCK_FALLING_EDGE:\n"
         
         :"+r"(buttonsA),"+r"(buttonsB), "+r"(mask)
         :
